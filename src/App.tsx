@@ -1,6 +1,17 @@
 import React from 'react'
 import { useQuery } from 'react-query'
 function App() {
+  const [show, toggle] = React.useReducer(d => !d, true)
+
+  return (
+    <>
+      <button onClick={() => toggle()}>{show ? 'Hide' : 'Show'}</button>
+      {show && <Pokemons />}
+    </>
+  )
+}
+
+function Pokemons() {
   const queryInfo = useQuery<{ name: string; url: string }[]>(
     'pokemon',
     () =>
@@ -8,7 +19,7 @@ function App() {
         .then(() => fetch('https://pokeapi.co/api/v2/pokemon'))
         .then(res => res.json())
         .then(res => res.results),
-    { staleTime: 5000 }
+    { cacheTime: 5000 }
   )
 
   console.log(queryInfo)
@@ -26,9 +37,8 @@ function App() {
           <div key={result.name}>{result.name}</div>
         ))}
       </div>
-      <div>{queryInfo.isFetching ? 'Fetching' : null}</div>
+      )<div>{queryInfo.isFetching ? 'Fetching' : null}</div>
     </>
   )
 }
-
 export default App
