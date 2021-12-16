@@ -23,10 +23,15 @@ export function postTodo(newTodo: { id: string; title: string }) {
 }
 
 export function getProjects(page: number) {
+  console.log("get page", page);
   return new Promise<Projects>((res) => {
+    const projects = new Array(10).fill(null).map((_, i) => ({
+      id: page * 10 + i,
+      name: `Project ${page * 10 + i}`,
+    }));
     setTimeout(() => {
       return res({
-        projects: [{ id: page, name: `Project ${page}` }],
+        projects,
         hasMore: true,
       });
     }, 2000);
