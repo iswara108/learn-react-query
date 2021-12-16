@@ -8,7 +8,7 @@ function App() {
         .then(() => fetch('https://pokeapi.co/api/v2/pokemon'))
         .then(res => res.json())
         .then(res => res.results),
-    { refetchOnWindowFocus: false }
+    { staleTime: 5000 }
   )
 
   console.log(queryInfo)
@@ -20,11 +20,14 @@ function App() {
   ) : queryInfo.isIdle ? (
     <>Idle</>
   ) : (
-    <div>
-      {queryInfo.data.map(result => (
-        <div key={result.name}>{result.name}</div>
-      ))}
-    </div>
+    <>
+      <div>
+        {queryInfo.data.map(result => (
+          <div key={result.name}>{result.name}</div>
+        ))}
+      </div>
+      <div>{queryInfo.isFetching ? 'Fetching' : null}</div>
+    </>
   )
 }
 
