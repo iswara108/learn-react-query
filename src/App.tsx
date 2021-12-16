@@ -8,7 +8,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "react-query";
-import { getTodos, postTodo } from "./my-api";
+import { getProjects, getTodos, postTodo } from "./my-api";
 import { ReactQueryDevtools } from "react-query/devtools";
 
 // Create a client
@@ -24,39 +24,50 @@ function App() {
 }
 
 function Todos() {
-  // Access the client
-  const queryClient = useQueryClient();
+  const [page, setPage] = React.useState(0);
 
-  // Queries
-  const query = useQuery("todos", getTodos);
+  const fetchProjects = (page = 0) => getProjects(page);
 
-  // Mutations
-  const mutation = useMutation(postTodo, {
-    onSuccess: () => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries("todos");
-    },
-  });
+  const { isLoading, isError, error, data, isFetching, isPreviousData } =
+    useQuery(["projects", page], () => fetchProjects(page), {
+      keepPreviousData: true,
+    });
 
   return (
     <div>
-      <ul>
-        {query.data?.map((todo) => (
-          <li key={todo.id}>{todo.title}</li>
-        ))}
-      </ul>
-
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : isError && error instanceof Error ? (
+        <div>Error: {error.message}</div>
+      ) : (
+        <div>
+          {data?.projects.map((project) => (
+            <p key={project.id}>{project.name}</p>
+          ))}
+        </div>
+      )}
+      <span>Current Page: {page + 1}</span>
+      <button
+        onClick={() => setPage((old) => Math.max(old - 1, 0))}
+        disabled={page === 0}
+      >
+        Previous Page
+      </button>{" "}
       <button
         onClick={() => {
-          mutation.mutate({
-            id: Date.now().toString(),
-            title: "Do Laundry",
-          });
+          if (!isPreviousData && data?.hasMore) {
+            setPage((old) => old + 1);
+          }
         }}
+        // Disable the Next Page button until we know a next page is available
+        disabled={isPreviousData || !data?.hasMore}
       >
-        Add Todo
-      </button>
+        Next Page
+      </button>{" "}
+      <span>{isPreviousData.toString()}</span>
+      {isFetching ? <span> Loading...</span> : null}{" "}
     </div>
   );
 }
+
 export default App;
