@@ -5,7 +5,11 @@ const todos = [
 ];
 
 export type Project = { id: number; name: string };
-export type Projects = { projects: Project[]; hasMore: boolean };
+export type Projects = {
+  projects: Project[];
+  hasMore: boolean;
+  nextCursor: number;
+};
 export function getTodos() {
   return new Promise<Todo[]>((res) => setTimeout(() => res(todos), 1000));
 }
@@ -22,17 +26,18 @@ export function postTodo(newTodo: { id: string; title: string }) {
   );
 }
 
-export function getProjects(page: number) {
-  console.log("get page", page);
+export function getProjects(cursor: number) {
+  console.log("get from cursor", cursor);
   return new Promise<Projects>((res) => {
     const projects = new Array(10).fill(null).map((_, i) => ({
-      id: page * 10 + i,
-      name: `Project ${page * 10 + i}`,
+      id: cursor + i,
+      name: `Project ${cursor + i}`,
     }));
     setTimeout(() => {
       return res({
         projects,
         hasMore: true,
+        nextCursor: cursor + 10,
       });
     }, 2000);
   });

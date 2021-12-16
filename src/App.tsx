@@ -2,11 +2,12 @@ import React from "react";
 import "./App.css";
 
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
+  // useQuery,
+  // useMutation,
+  // useQueryClient,
   QueryClient,
   QueryClientProvider,
+  useInfiniteQuery,
 } from "react-query";
 import { getProjects, getTodos, postTodo } from "./my-api";
 import { ReactQueryDevtools } from "react-query/devtools";
@@ -17,65 +18,56 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Todos />
+      <Projects />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
 
-function Todos() {
-  const [page, setPage] = React.useState(0);
+function Projects() {
+  const fetchProjects = ({ pageParam = 0 }) => getProjects(pageParam);
 
-  const fetchProjects = (page = 0) => getProjects(page);
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    status,
+    refetch,
+  } = useInfiniteQuery("projects", fetchProjects, {
+    getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
+  });
 
-  const { isLoading, isError, error, data, isFetching, isPreviousData } =
-    useQuery(["projects", page], () => fetchProjects(page), {
-      keepPreviousData: true,
-    });
-
-  // Prefetch the next page!
-  React.useEffect(() => {
-    if (data?.hasMore) {
-      queryClient.prefetchQuery(["projects", page + 1], () =>
-        fetchProjects(page + 1)
-      );
-    }
-  }, [data, page, queryClient]);
-
-  return (
-    <div>
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : isError && error instanceof Error ? (
-        <div>Error: {error.message}</div>
-      ) : (
-        <div>
-          {data?.projects.map((project) => (
+  return status === "loading" ? (
+    <p>Loading...</p>
+  ) : status === "error" && error instanceof Error ? (
+    <p>Error: {error.message}</p>
+  ) : (
+    <>
+      <button onClick={() => refetch()}>refetch</button>
+      {data?.pages.map((group, i) => (
+        <React.Fragment key={i}>
+          {group.projects.map((project) => (
             <p key={project.id}>{project.name}</p>
           ))}
-        </div>
-      )}
-      <span>Current Page: {page + 1}</span>
-      <button
-        onClick={() => setPage((old) => Math.max(old - 1, 0))}
-        disabled={page === 0}
-      >
-        Previous Page
-      </button>{" "}
-      <button
-        onClick={() => {
-          if (!isPreviousData && data?.hasMore) {
-            setPage((old) => old + 1);
-          }
-        }}
-        // Disable the Next Page button until we know a next page is available
-        disabled={isPreviousData || !data?.hasMore}
-      >
-        Next Page
-      </button>{" "}
-      <span>{isPreviousData.toString()}</span>
-      {isFetching ? <span> Loading...</span> : null}{" "}
-    </div>
+        </React.Fragment>
+      ))}
+      <div>
+        <button
+          onClick={() => fetchNextPage()}
+          disabled={!hasNextPage || isFetchingNextPage}
+        >
+          {isFetchingNextPage
+            ? "Loading more..."
+            : hasNextPage
+            ? "Load More"
+            : "Nothing more to load"}
+        </button>
+      </div>
+      <div>{isFetching && !isFetchingNextPage ? "Fetching..." : null}</div>
+    </>
   );
 }
 
