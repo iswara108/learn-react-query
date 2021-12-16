@@ -1,12 +1,14 @@
 import React from 'react'
 import { useQuery } from 'react-query'
-
 function App() {
-  const queryInfo = useQuery<{ name: string; url: string }[]>('pokemon', () =>
-    new Promise(res => setTimeout(res, 2000))
-      .then(() => fetch('https://pokeapi.co/api/v2/pokemon'))
-      .then(res => res.json())
-      .then(res => res.results)
+  const queryInfo = useQuery<{ name: string; url: string }[]>(
+    'pokemon',
+    () =>
+      new Promise(res => setTimeout(res, 2000))
+        .then(() => fetch('https://pokeapi.co/api/v2/pokemon'))
+        .then(res => res.json())
+        .then(res => res.results),
+    { refetchOnWindowFocus: false }
   )
 
   console.log(queryInfo)
